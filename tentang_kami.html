@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tentang Kami - Kasir-Toko</title>
+    <style>
+        /* CSS RESET & BASE */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #f1f5f9; color: #1e293b; min-height: 100vh; padding-bottom: 80px; position: relative; }
+        
+        /* HEADER (DIPERBESAR) */
+        header { background-color: #0284c7; color: white; padding: 18px 20px; display: flex; align-items: center; gap: 20px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 999; }
+        .btn-back { background: none; border: none; color: white; font-size: 24px; cursor: pointer; text-decoration: none; display: flex; align-items: center; padding-right: 10px; }
+        header h2 { font-size: 20px; font-weight: bold; }
+
+        /* AREA KONTEN */
+        .container { padding: 20px; max-width: 650px; margin: 0 auto; }
+        
+        /* KARTU UTAMA (UKURAN TEKS NAIK) */
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .brand-logo { font-size: 55px; text-align: center; margin-bottom: 12px; }
+        .card h1 { font-size: 26px; color: #0284c7; text-align: center; margin-bottom: 18px; font-weight: 800; }
+        .card p { font-size: 16px; color: #334155; line-height: 1.7; text-align: justify; margin-bottom: 0; }
+
+        /* INTERACTIVE BUTTONS (ACCORDION - JAUH LEBIH BESAR & JELAS) */
+        .accordion-btn { width: 100%; padding: 18px 22px; border: 2px solid #cbd5e1; background: white; color: #1e293b; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; margin-bottom: 15px; }
+        .accordion-btn:hover { background-color: #f8fafc; border-color: #0284c7; color: #0284c7; }
+        .accordion-btn.active { background-color: #f0f9ff; border-color: #0284c7; color: #0284c7; border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; border-bottom: none; }
+        
+        /* KONTEN ACCORDION (LONGGAR & LEGA) */
+        .accordion-content { background: white; border: 2px solid #cbd5e1; border-top: none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; padding: 0 22px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; margin-bottom: 15px; }
+        
+        /* STYLE ISI VISI MISI & FITUR */
+        .sub-section { padding: 15px 0; }
+        .sub-section h3 { font-size: 16px; color: #0284c7; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; font-weight: 700; }
+        .sub-section p { font-size: 16px; color: #334155; line-height: 1.6; margin-bottom: 15px; }
+        .sub-section ul { padding-left: 22px; font-size: 16px; color: #334155; }
+        .sub-section li { margin-bottom: 12px; line-height: 1.6; }
+        .sub-section li strong { color: #0f172a; }
+
+        /* FOOTER VERSION */
+        footer { width: 100%; text-align: center; padding: 25px 15px; font-size: 13px; color: #94a3b8; font-weight: 500; position: absolute; bottom: 0; left: 0; }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER ATAS -->
+    <header>
+        <a href="aplikasi_kasir.html" class="btn-back">❮</a>
+        <h2>Tentang Kami</h2>
+    </header>
+
+    <div class="container">
+        
+        <!-- KARTU SAMBUTAN UTAMA -->
+        <div class="card">
+            <div class="brand-logo">🏪</div>
+            <h1>Selamat Datang di Kasir-Toko!</h1>
+            <p>Kami adalah platform penyedia layanan kasir berbasis web yang dirancang khusus untuk membantu para pelaku usaha (UMKM hingga retail) dalam mengelola transaksi penjualan dengan lebih mudah, cepat, dan akurat. Kami percaya bahwa teknologi yang tepat dapat membantu bisnis skala apa pun untuk tumbuh lebih besar dan efisien.</p>
+        </div>
+
+        <!-- BUTTON 1: VISI & MISI -->
+        <button class="accordion-btn" onclick="toggleAccordion(this, 'content-visi-misi')">
+            <span>🎯 Visi & Misi</span>
+            <span class="arrow">❯</span>
+        </button>
+        <div id="content-visi-misi" class="accordion-content">
+            <div class="sub-section">
+                <h3>Visi</h3>
+                <p>Menjadi mitra digital terpercaya bagi setiap pengusaha dalam mendigitalisasi dan mengembangkan bisnis mereka secara berkelanjutan.</p>
+                
+                <h3>Misi</h3>
+                <ul>
+                    <li><strong>Menyediakan Teknologi yang Inklusif:</strong> Menghadirkan sistem kasir yang andal namun tetap mudah dioperasikan oleh semua kalangan pelaku usaha.</li>
+                    <li><strong>Meningkatkan Efisiensi Bisnis:</strong> Membantu mengotomatisasi pencatatan transaksi dan inventaris demi meminimalkan kesalahan manual.</li>
+                    <li><strong>Mendukung Pertumbuhan UMKM:</strong> Memberikan akses data penjualan yang akurat demi membantu pemilik bisnis mengambil keputusan yang lebih tepat.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- BUTTON 2: MENGAPA MEMILIH KAMI -->
+        <button class="accordion-btn" onclick="toggleAccordion(this, 'content-why-us')">
+            <span>💡 Mengapa Memilih Kami?</span>
+            <span class="arrow">❯</span>
+        </button>
+        <div id="content-why-us" class="accordion-content">
+            <div class="sub-section">
+                <ul>
+                    <li><strong>Mudah Digunakan:</strong> Antarmuka yang ramah pengguna (user-friendly), bahkan untuk yang baru pertama kali menggunakan aplikasi kasir berbasis digital.</li>
+                    <li><strong>Efisien & Akurat:</strong> Mempercepat proses transaksi di meja kasir dan meminimalkan risiko selisih perhitungan.</li>
+                    <li><strong>Akses Kapan Saja (Berbasis Web):</strong> Karena berjalan di web, Anda bisa memantau laporan keuangan dan performa toko dari mana saja secara real-time melalui smartphone, tablet, atau laptop.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- KARTU AJAKAN -->
+        <div class="card" style="margin-top: 20px; text-align: center; border-left: 5px solid #0284c7; background-color: #f8fafc;">
+            <p style="font-style: italic; font-weight: 600; color: #0f172a; text-align: center; font-size: 16px;">
+                "Mari melangkah lebih maju dan buat operasional bisnis Anda jadi lebih modern, efektif, dan profesional bersama Kasir-Toko."
+            </p>
+        </div>
+
+    </div>
+
+    <!-- WATERMARK VERSI -->
+    <footer>
+        Version 1.0.0 © 2026 Kasir-Toko
+    </footer>
+
+    <script>
+        function toggleAccordion(btn, contentId) {
+            const content = document.getElementById(contentId);
+            const arrow = btn.querySelector('.arrow');
+            
+            if (content.style.maxHeight && content.style.maxHeight !== "0px") {
+                content.style.maxHeight = "0px";
+                content.style.paddingTop = "0px";
+                content.style.paddingBottom = "0px";
+                btn.classList.remove('active');
+                arrow.style.transform = "rotate(0deg)";
+            } else {
+                document.querySelectorAll('.accordion-content').forEach(c => {
+                    c.style.maxHeight = "0px";
+                    c.style.paddingTop = "0px";
+                    c.style.paddingBottom = "0px";
+                });
+                document.querySelectorAll('.accordion-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.arrow').forEach(a => a.style.transform = "rotate(0deg)");
+
+                content.style.paddingTop = "20px";
+                content.style.paddingBottom = "20px";
+                content.style.maxHeight = content.scrollHeight + 40 + "px"; 
+                btn.classList.add('active');
+                arrow.style.transform = "rotate(90deg)";
+                arrow.style.transition = "transform 0.2s";
+            }
+        }
+    </script>
+</body>
+</html>

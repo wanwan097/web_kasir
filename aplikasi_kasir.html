@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asisten Toko - Aplikasi Kasir & Stok</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* CSS RESET & BASE */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #f1f5f9; color: #1e293b; padding-bottom: 75px; min-height: 100vh; }
+        
+        /* HEADER UTAMA */
+        header { background-color: #0284c7; color: white; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 999; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .avatar-inisial { width: 40px; height: 40px; border-radius: 50%; background-color: #f59e0b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border: 2px solid white; object-fit: cover; }
+        .header-title h2 { font-size: 15px; font-weight: bold; }
+        .header-title p { font-size: 11px; color: #e0f2fe; }
+        #page-title-tag { font-size: 14px; font-weight: bold; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; }
+
+        /* AREA KONTEN */
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* KARTU STYLE */
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .card h3 { font-size: 13px; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+        .card p { font-size: 22px; font-weight: bold; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+
+        /* FORM INPUT */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 500; color: #475569; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: #0284c7; }
+        
+        /* BUTTONS */
+        .btn { width: 100%; padding: 12px; border: none; background-color: #0284c7; color: white; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; display: block; text-decoration: none; }
+        .btn:hover { background-color: #0369a1; }
+        .btn-success { background-color: #16a34a; }
+        .btn-success:hover { background-color: #15803d; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+
+        /* SCANNER WINDOW */
+        .scanner-view-box { background: #000; border-radius: 12px; min-height: 180px; margin-bottom: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #94a3b8; font-weight: bold; position: relative; overflow: hidden; }
+        #reader, #reader-produk { width: 100%; background: black; border-radius: 12px; overflow: hidden; }
+        video { object-fit: cover !important; width: 100% !important; height: auto !important; }
+
+        /* LIST PRODUK MINIMALIS DI KASIR */
+        .kasir-product-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; margin-top: 5px; padding-right: 5px; }
+        .product-item-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .product-item-card:hover { background: #f1f5f9; border-color: #0284c7; }
+        .prod-info-left { display: flex; flex-direction: column; gap: 2px; }
+        .prod-title { font-size: 14px; font-weight: bold; color: #1e293b; }
+        .prod-code { font-size: 11px; color: #64748b; letter-spacing: 0.5px; }
+        .prod-price-right { font-size: 14px; font-weight: bold; color: #0284c7; }
+
+        /* PAYMENT METHOD BUTTONS */
+        .payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .pay-method-btn { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; background: white; font-weight: bold; cursor: pointer; text-align: center; font-size: 14px; }
+        .pay-method-btn.active { border-color: #0284c7; background-color: #f0f9ff; color: #0284c7; }
+
+        /* TABLES */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        table th, table td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        table th { background-color: #f8fafc; color: #64748b; }
+
+        /* MENU PENGATURAN SIMPEL */
+        .setting-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .setting-item { background: #f8fafc; padding: 14px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: #1e293b; font-size: 14px; font-weight: 500; border: 1px solid #e2e8f0; cursor: pointer; }
+        .setting-item:hover { background: #f1f5f9; }
+
+        /* TOAST NOTIFIKASI */
+        .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: white; font-size: 14px; font-weight: 500; z-index: 9999; transition: 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .toast.show { top: 20px; }
+
+        /* BOTTOM NAV */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: white; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); border-top: 1px solid #e2e8f0; z-index: 1000; }
+        .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; font-size: 11px; cursor: pointer; width: 20%; height: 100%; }
+        .nav-item .icon { font-size: 20px; margin-bottom: 2px; }
+        .nav-item.active { color: #0284c7; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="toast-alert" class="toast" style="background-color: #10b981;">Memproses...</div>
+
+    <header>
+        <div class="header-left">
+            <div id="shop-avatar" class="avatar-inisial">-</div>
+            <div class="header-title">
+                <h2 id="shop-name-display">Memuat Toko...</h2>
+                <p id="shop-email-display">...</p>
+            </div>
+        </div>
+        <div id="page-title-tag">Utama</div>
+    </header>
+
+    <div class="container">
+
+        <div id="dashboard" class="page active">
+            <div class="grid-2">
+                <div class="card"><h3>Omzet Bulan Ini</h3><p id="dash-omzet" style="color:#0284c7;">Rp 0</p></div>
+                <div class="card"><h3>Estimasi Laba</h3><p id="dash-laba" style="color:#16a34a;">Rp 0</p></div>
+            </div>
+            <div class="grid-2">
+                <div class="card"><h3>Total Produk</h3><p id="dash-total-produk">0 Item</p></div>
+                <div class="card"><h3>Transaksi Hari Ini</h3><p id="dash-transaksi">0</p></div>
+            </div>
+
+<div class="card">
+    <h3>📈 Grafik Perkembangan Omzet (2026)</h3>
+    <div style="position: relative; width: 100%; height: 230px; margin-top: 10px;">
+        <canvas id="chartOmzet"></canvas>
+    </div>
+
+</div>
+
+            <div class="card">
+                <h3>Catatan Berkala</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Periode</th><th>Omzet</th><th>Laba</th></tr></thead>
+                        <tbody>
+                            <tr><td>Minggu Ini</td><td id="dash-omzet-w">Rp 0</td><td id="dash-laba-w" style="color: #16a34a;">Rp 0</td></tr>
+                            <tr><td>Bulan Ini</td><td id="dash-omzet-m">Rp 0</td><td id="dash-laba-m" style="color: #16a34a;">Rp 0</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="produk" class="page">
+            <div class="scanner-view-box">
+                <div id="reader-produk"></div>
+                <div id="scanner-placeholder-produk" style="padding: 20px; text-align: center;">
+                    <span style="font-size: 28px;">📷</span>
+                    <p style="margin: 5px 0; font-size:13px;">SCAN BARCODE UNTUK TAMBAH PRODUK</p>
+                </div>
+                <button id="btn-toggle-scan-produk" class="btn" style="width:80%; padding: 8px; font-size:12px; margin-bottom: 15px; background:#475569;">Buka Kamera Input</button>
+            </div>
+
+            <div class="card">
+                <h3>Tambah / Update Produk</h3>
+                <div class="form-group">
+                    <label>Kode / Barcode Produk</label>
+                    <input type="text" id="prod-barcode" placeholder="Contoh: 899123456789">
+                </div>
+                <div class="form-group">
+                    <label>Nama Produk</label>
+                    <input type="text" id="prod-nama" placeholder="Nama barang">
+                </div>
+                <div class="grid-2" style="margin-bottom:0;">
+                    <div class="form-group">
+                        <label>Harga Modal</label>
+                        <input type="text" id="prod-modal" placeholder="Rp 0">
+                    </div>
+                    <div class="form-group">
+                        <label>Harga Jual</label>
+                        <input type="text" id="prod-jual" placeholder="Rp 0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Stok</label>
+                    <input type="number" id="prod-stok" placeholder="0">
+                </div>
+                <button class="btn" id="btn-simpan-produk">Simpan Produk</button>
+            </div>
+
+            <div class="card">
+                <h3>Daftar Stok Produk</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Nama</th><th>Jual</th><th>Stok</th></tr></thead>
+                        <tbody id="list-stok-barang"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="kasir" class="page">
+            <div class="scanner-view-box">
+                <div id="reader"></div>
+                <div id="scanner-placeholder" style="padding: 20px; text-align: center;">
+                    <span style="font-size: 28px;">📷</span>
+                    <p style="margin: 5px 0; font-size:13px;">KAMERA STANDBY KASIR</p>
+                </div>
+                <button id="btn-toggle-scan" class="btn" style="width:80%; padding: 8px; font-size:12px; margin-bottom: 15px; background:#475569;">Buka Kamera Scan</button>
+            </div>
+
+            <div class="card">
+                <h3>Pilih Produk Langsung</h3>
+                <div class="kasir-product-list" id="kasir-product-list-view">
+                    <div style="font-size:12px; color:#64748b; text-align:center; padding:10px;">Memuat daftar produk...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Keranjang Belanja <button onclick="window.kosongkanKeranjang()" style="float:right; background:none; border:none; color:#ef4444; font-size:12px; font-weight:bold; cursor:pointer;">Reset 🗑️</button></h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+                        <tbody id="cart-items"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <strong>Total Tagihan:</strong>
+                    <span id="kasir-total-tagihan" style="font-size: 24px; font-weight: bold; color: #0284c7;">Rp 0</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Metode Pembayaran</h3>
+                <div class="payment-methods">
+                    <div id="pay-tunai" class="pay-method-btn active" onclick="setPaymentMethod('tunai')">💵 TUNAI</div>
+                    <div id="pay-qris" class="pay-method-btn" onclick="setPaymentMethod('qris')">📱 QRIS</div>
+                </div>
+
+                <div id="input-tunai-group">
+                    <div class="form-group">
+                        <label>Uang Diterima (Cash)</label>
+                        <input type="text" id="cash-input" placeholder="Rp 0">
+                    </div>
+                    <div class="form-group">
+                        <label>Kembalian</label>
+                        <input type="text" id="cash-change" placeholder="Rp 0" disabled style="background-color: #e2e8f0; font-weight: bold; color: #16a34a;">
+                    </div>
+                </div>
+
+                <div id="display-qris-group" style="display: none; text-align: center; padding: 10px 0;">
+                    <div style="background: #fff; border: 1px solid #cbd5e1; display: inline-block; padding: 10px; border-radius: 8px;">
+                        <span style="font-size: 40px;">🔳</span><br>
+                        <span style="font-size: 12px; font-weight: bold;">QRIS Otomatis Akun</span>
+                    </div>
+                </div>
+                <button class="btn btn-success" id="btn-proses-transaksi" style="margin-top: 10px;">Proses Transaksi</button>
+            </div>
+        </div>
+
+        <div id="riwayat" class="page">
+            <div class="card">
+                <h3>History Penjualan</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Waktu</th><th>Total</th><th>Metode</th></tr></thead>
+                        <tbody id="history-transactions-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="setting" class="page">
+            <div class="card">
+                <h3>Profil Lengkap Toko</h3>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <div id="shop-avatar-large" class="avatar-inisial" style="width:70px; height:70px; font-size:26px; margin:0 auto 8px auto;">-</div>
+                    <label for="upload-foto" style="font-size:12px; color:#0284c7; cursor:pointer; font-weight:bold;">Ganti Foto Profil</label>
+                    <input type="file" id="upload-foto" accept="image/*" style="display:none;">
+                </div>
+                <div class="form-group">
+                    <label>Nama Toko</label>
+                    <input type="text" id="edit-nama-toko">
+                </div>
+                <div class="form-group">
+                    <label>Email Pengguna (Aktif)</label>
+                    <input type="text" id="edit-email-toko" disabled style="background:#e2e8f0; color:#64748b;">
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP Toko <span style="color:red;">*Wajib</span></label>
+                    <input type="number" id="edit-phone-toko" placeholder="Contoh: 0812345678">
+                </div>
+                <button class="btn btn-success" id="btn-simpan-profil">Simpan Identitas Toko</button>
+            </div>
+
+            <div class="card">
+                <h3>Menu Tambahan</h3>
+                <div class="setting-list">
+                    <a href="lapor_masalah.html" class="setting-item"><span>⚠️ Laporkan Masalah</span><span>❯</span></a>
+                    <a href="tentang_kami.html" class="setting-item"><span>ℹ️ Tentang Kami</span><span>❯</span></a>
+                    <div class="setting-item" id="btn-logout" style="color:#ef4444; border-color:#fecaca; background:#fef2f2;">
+                        <span>🚪 Keluar dari Akun</span><span>❯</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchPage('dashboard', 'Utama')"><span class="icon">🏠</span><span>Utama</span></button>
+        <button class="nav-item" onclick="switchPage('produk', 'Stok')"><span class="icon">📦</span><span>Stok</span></button>
+        <button class="nav-item" onclick="switchPage('kasir', 'Kasir')"><span class="icon">🛒</span><span>Kasir</span></button>
+        <button class="nav-item" onclick="switchPage('riwayat', 'Riwayat')"><span class="icon">📜</span><span>Riwayat</span></button>
+        <button class="nav-item" onclick="switchPage('setting', 'Pengaturan')"><span class="icon">⚙️</span><span>Pengaturan</span></button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, get, set, update, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcvaZATpsbSNtBAuKxuCsvpfLjODc7Cko",
+            authDomain: "asisten-toko.firebaseapp.com",
+            databaseURL: "https://asisten-toko-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "asisten-toko",
+            storageBucket: "asisten-toko.firebasestorage.app",
+            messagingSenderId: "493614445360",
+            appId: "1:493614445360:web:2f235b72bdace6578c8ef5",
+            measurementId: "G-1923M0HH2W"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let currentUid = null;
+        let html5QrCode = null;
+        let html5QrCodeProduk = null;
+        let localProducts = {}; 
+        let isScanLocked = false; 
+        let myOmzetChart = null; // Penampung objek Grafik ChartJS
+
+        window.formatRupiahString = function(angka) {
+            return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        };
+
+        window.cleanRupiahValue = function(str) {
+            return parseInt(str.replace(/\./g, '')) || 0;
+        };
+
+        // INISIALISASI AWAL GRAFIK CHART.JS (DENGAN DATA KOSONG)
+        function initChart() {
+            const ctx = document.getElementById('chartOmzet').getContext('2d');
+            myOmzetChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                    datasets: [{
+                        label: 'Omzet',
+                        data: [0,0,0,0,0,0,0,0,0,0,0,0], // Dimulai dari nol semua
+                        backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                        borderColor: '#0284c7',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        pointBackgroundColor: '#0284c7',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0' },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'jt';
+                                    if (value >= 1000) return 'Rp ' + (value / 1000) + 'rb';
+                                    return 'Rp ' + value;
+                                }
+                            }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUid = user.uid;
+                document.getElementById('edit-email-toko').value = user.email;
+                document.getElementById('shop-email-display').innerText = user.email;
+                initChart(); // Jalankan grafik kosong
+                loadShopProfile(user.uid);
+                listenToProducts(user.uid); 
+                listenToHistory(user.uid); 
+            } else {
+                window.location.href = "index.html"; 
+            }
+        });
+
+        async function loadShopProfile(uid) {
+            const shopRef = ref(db, 'users/' + uid + '/profile');
+            try {
+                const snapshot = await get(shopRef);
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    updateUIProfile(data.namaToko || "Nama Toko", data.noHp || "", data.fotoUrl || null);
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function updateUIProfile(nama, phone, fotoUrl) {
+            document.getElementById('shop-name-display').innerText = nama;
+            document.getElementById('edit-nama-toko').value = nama;
+            document.getElementById('edit-phone-toko').value = phone;
+            const avatarSmall = document.getElementById('shop-avatar');
+            const avatarLarge = document.getElementById('shop-avatar-large');
+            if (fotoUrl) {
+                avatarSmall.outerHTML = `<img id="shop-avatar" src="${fotoUrl}" class="avatar-inisial">`;
+                avatarLarge.outerHTML = `<img id="shop-avatar-large" src="${fotoUrl}" class="avatar-inisial" style="width:70px; height:70px; margin:0 auto 8px auto;">`;
+            } else {
+                const inisial = nama.charAt(0).toUpperCase();
+                avatarSmall.innerText = inisial;
+                avatarLarge.innerText = inisial;
+            }
+        }
+
+        document.getElementById('btn-simpan-produk').addEventListener('click', async () => {
+            const barcode = document.getElementById('prod-barcode').value.trim();
+            const nama = document.getElementById('prod-nama').value.trim();
+            const modal = window.cleanRupiahValue(document.getElementById('prod-modal').value);
+            const jual = window.cleanRupiahValue(document.getElementById('prod-jual').value);
+            const stok = document.getElementById('prod-stok').value;
+            
+
+
+            if(!barcode || !nama || !jual || !stok) {
+                popNotif("Lengkapi data produk!", "#ef4444");
+                return;
+            }
+            try {
+                await set(ref(db, `users/${currentUid}/products/${barcode}`), {
+                    barcode, nama, hargaModal: modal, hargaJual: jual, stok: parseInt(stok)
+                });
+                popNotif("Produk Berhasil Disimpan!", "#10b981");
+                document.getElementById('prod-barcode').value = '';
+                document.getElementById('prod-nama').value = '';
+                document.getElementById('prod-modal').value = '';
+                document.getElementById('prod-jual').value = '';
+                document.getElementById('prod-stok').value = '';
+            } catch(e) { popNotif("Gagal: " + e.message, "#ef4444"); }
+        });
+
+        function listenToProducts(uid) {
+            const prodRef = ref(db, `users/${uid}/products`);
+            onValue(prodRef, (snapshot) => {
+                const listStok = document.getElementById('list-stok-barang');
+                const listKasir = document.getElementById('kasir-product-list-view');
+                listStok.innerHTML = ''; listKasir.innerHTML = '';
+                localProducts = {}; 
+
+                if(snapshot.exists()) {
+                    let totalItem = 0;
+                    snapshot.forEach((child) => {
+                        const p = child.val(); totalItem++;
+                        localProducts[p.barcode] = p; 
+                        listStok.innerHTML += `<tr><td>${p.nama}</td><td>Rp ${window.formatRupiahString(p.hargaJual)}</td><td>${p.stok}</td></tr>`;
+                        listKasir.innerHTML += `
+                            <div class="product-item-card" onclick="window.tambahKeKeranjang('${p.barcode}', '${p.nama}', ${p.hargaJual})">
+                                <div class="prod-info-left"><span class="prod-title">${p.nama}</span><span class="prod-code">🔢 ${p.barcode} (Stok: ${p.stok})</span></div>
+                                <div class="prod-price-right">Rp ${window.formatRupiahString(p.hargaJual)}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('dash-total-produk').innerText = totalItem + " Item";
+                } else {
+                    listStok.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#64748b;">Belum ada produk</td></tr>`;
+                    listKasir.innerHTML = `<div style="font-size:12px; color:#64748b; text-align:center; padding:10px;">Belum ada produk terdaftar</div>`;
+                }
+            });
+        }
+
+        // FUNGSI UTAMA: MEMBACA TRANSAKSI & MEMASUKKANNYA KE GRAFIK SESUAI BULAN
+        function listenToHistory(uid) {
+            const histRef = ref(db, `users/${uid}/history`);
+            onValue(histRef, (snapshot) => {
+                const listHist = document.getElementById('history-transactions-list');
+                listHist.innerHTML = '';
+
+                let totalOmzetBulanIni = 0;
+                let totalLabaBulanIni = 0;
+                let totalTransaksi = 0;
+
+                // Siapkan array kosong 12 bulan untuk menampung omzet grafik [Jan, Feb, ... Des]
+                let monthlyDataChart = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+                if (snapshot.exists()) {
+                    let rows = [];
+                    snapshot.forEach((child) => {
+                        const h = child.val();
+                        totalTransaksi++;
+
+                        // --- LOGIKA GRAFIK KASIR ---
+                        // Mencari bulan dari transaksi. Format waktu tersimpan: "HH:MM - DD/MM/YYYY" atau dari date object
+                        // Kita ekstrak menggunakan pengondisian teks atau jika ada timestamp
+                        // Jika format string Anda adalah: "14:20 - 04/07/2026", kita ambil bagian tanggalnya:
+                        try {
+                            const datePart = h.waktu.split(" - ")[1]; // Hasil: "04/07/2026"
+                            const monthIndex = parseInt(datePart.split("/")[1]) - 1; // Mengambil angka "07" -> jadi indeks ke-6 (Juli)
+                            if(monthIndex >= 0 && monthIndex <= 11) {
+                                monthlyDataChart[monthIndex] += h.totalTagihan; // Masukkan omzet ke bulan yang sesuai
+                            }
+                        } catch(e) { /* fallback jika parse gagal */ }
+
+                        // Hitung total keseluruhan bulan berjalan saat ini
+                        totalOmzetBulanIni += h.totalTagihan;
+                        totalLabaBulanIni += h.estimasiLaba || 0;
+
+                        rows.unshift(`<tr><td>${h.waktu}</td><td>Rp ${window.formatRupiahString(h.totalTagihan)}</td><td><span style="text-transform:uppercase; font-size:11px; font-weight:bold;">${h.metode}</span></td></tr>`);
+                    });
+                    listHist.innerHTML = rows.join('');
+                } else {
+                    listHist.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#64748b;">Belum ada transaksi</td></tr>`;
+                }
+
+                // UPDATE DATA PADA GRAFIK SECARA LIVE
+                if(myOmzetChart) {
+                    myOmzetChart.data.datasets[0].data = monthlyDataChart;
+                    myOmzetChart.update(); // Perbarui tampilan grafik
+                }
+
+                document.getElementById('dash-omzet').innerText = "Rp " + window.formatRupiahString(totalOmzetBulanIni);
+                document.getElementById('dash-laba').innerText = "Rp " + window.formatRupiahString(totalLabaBulanIni);
+                document.getElementById('dash-transaksi').innerText = totalTransaksi;
+                document.getElementById('dash-omzet-w').innerText = "Rp " + window.formatRupiahString(totalOmzetBulanIni);
+                document.getElementById('dash-laba-w').innerText = "Rp " + window.formatRupiahString(totalLabaBulanIni);
+                document.getElementById('dash-omzet-m').innerText = "Rp " + window.formatRupiahString(totalOmzetBulanIni);
+                document.getElementById('dash-laba-m').innerText = "Rp " + window.formatRupiahString(totalLabaBulanIni);
+            });
+        }
+
+        document.getElementById('btn-proses-transaksi').addEventListener('click', async () => {
+            const totalTagihan = window.getGlobalTotal();
+            if (totalTagihan <= 0) { popNotif("Keranjang masih kosong!", "#ef4444"); return; }
+
+            const metode = window.getGlobalMethod();
+            if (metode === 'tunai') {
+                const cashInput = window.cleanRupiahValue(document.getElementById('cash-input').value);
+                if (cashInput < totalTagihan) { popNotif("Uang cash diterima kurang!", "#ef4444"); return; }
+            }
+
+            popNotif("Sedang memproses transaksi...", "#0284c7");
+
+            try {
+                let estimasiLabaTransaksi = 0;
+                const keranjangCurrent = window.getKeranjangData();
+
+                for (let barcode in keranjangCurrent) {
+                    const itemCart = keranjangCurrent[barcode];
+                    const itemDb = localProducts[barcode];
+                    if (itemDb) {
+                        const stokBaru = Math.max(0, itemDb.stok - itemCart.qty);
+                        const modalItem = itemDb.hargaModal || 0;
+                        estimasiLabaTransaksi += (itemDb.hargaJual - modalItem) * itemCart.qty;
+                        await update(ref(db, `users/${currentUid}/products/${barcode}`), { stok: stokBaru });
+                    }
+                }
+
+                const tgl = new Date();
+                // Menggunakan format DD/MM/YYYY agar pemisahan indeks bulan di fungsi listenToHistory berjalan sempurna
+                const pad = (n) => n.toString().padStart(2, '0');
+                const stringWaktu = `${pad(tgl.getHours())}:${pad(tgl.getMinutes())} - ${pad(tgl.getDate())}/${pad(tgl.getMonth()+1)}/${tgl.getFullYear()}`;
+                
+                await set(push(ref(db, `users/${currentUid}/history`)), {
+                    waktu: stringWaktu,
+                    totalTagihan: totalTagihan,
+                    metode: metode,
+                    estimasiLaba: estimasiLabaTransaksi
+                });
+
+                popNotif("Transaksi Berhasil Diselesaikan! 🎉", "#10b981");
+                window.kosongkanKeranjang();
+                document.getElementById('cash-input').value = '';
+                document.getElementById('cash-change').value = '';
+            } catch (err) { popNotif("Gagal: " + err.message, "#ef4444"); }
+        });
+
+        document.getElementById('btn-simpan-profil').addEventListener('click', async () => {
+            const namaBaru = document.getElementById('edit-nama-toko').value.trim();
+            const phoneBaru = document.getElementById('edit-phone-toko').value.trim();
+            if (!namaBaru || !phoneBaru) { popNotif("Nama & No HP Wajib Diisi!", "#ef4444"); return; }
+            try {
+                await update(ref(db, 'users/' + currentUid + '/profile'), { namaToko: namaBaru, noHp: phoneBaru });
+                popNotif("Profil Berhasil Disimpan!", "#10b981");
+            } catch (err) { popNotif("Gagal", "#ef4444"); }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            if (confirm("Keluar dari akun?")) { await signOut(auth); window.location.href = "index.html"; }
+        });
+
+        // =======================================================================
+        // FIX KAN KEDUA KAMERA (PASTIKAN KAMERA BELAKANG UTAMA & TANPA PEMBATAS KOTAK)
+        // =======================================================================
+        document.getElementById('btn-toggle-scan').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-toggle-scan');
+            const placeholder = document.getElementById('scanner-placeholder');
+            if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader"); }
+            
+            if (btn.innerText === "Buka Kamera Scan") {
+                placeholder.style.display = "none"; btn.innerText = "Memulai Kamera...";
+                try {
+                    await html5QrCode.start(
+                        { facingMode: { exact: "environment" } }, // Paksa Kamera Belakang Utama HP
+                        { 
+                            fps: 15, 
+                            videoConstraints: {
+                                facingMode: { exact: "environment" },
+                                width: { ideal: 3840 },
+                                height: { ideal: 2160 }
+                            }
+                        },
+                        (decodedText) => { 
+                            if (isScanLocked) return; 
+                            isScanLocked = true; 
+                            triggerScanSelect(decodedText); 
+                            setTimeout(() => { isScanLocked = false; }, 2000); // Kunci 2 Detik Anti-Double input
+                        },
+                        (errorMessage) => { }
+                    );
+                    btn.innerText = "Matikan Kamera"; btn.style.background = "#ef4444";
+                } catch (err) { placeholder.style.display = "block"; btn.innerText = "Buka Kamera Scan"; popNotif("Gunakan perangkat HP untuk akses kamera belakang", "#ef4444"); }
+            } else { matikanKamera(); }
+        });
+
+        async function matikanKamera() {
+            const btn = document.getElementById('btn-toggle-scan'); const placeholder = document.getElementById('scanner-placeholder');
+            if (html5QrCode && html5QrCode.isScanning) { await html5QrCode.stop(); }
+            placeholder.style.display = "block"; btn.innerText = "Buka Kamera Scan"; btn.style.background = "#475569";
+        }
+
+        async function triggerScanSelect(barcode) {
+            const snapshot = await get(ref(db, `users/${currentUid}/products/${barcode}`));
+            if(snapshot.exists()){
+                const prod = snapshot.val(); 
+                window.tambahKeKeranjang(prod.barcode, prod.nama, prod.hargaJual);
+                popNotif("🛒 Berhasil ditambahkan: " + prod.nama, "#10b981");
+            } else { popNotif("⚠️ Barcode " + barcode + " belum terdaftar!", "#ef4444"); }
+        }
+
+        document.getElementById('btn-toggle-scan-produk').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-toggle-scan-produk');
+            const placeholder = document.getElementById('scanner-placeholder-produk');
+            if (!html5QrCodeProduk) { html5QrCodeProduk = new Html5Qrcode("reader-produk"); }
+            
+            if (btn.innerText === "Buka Kamera Input") {
+                placeholder.style.display = "none"; btn.innerText = "Memulai Kamera...";
+                try {
+                    await html5QrCodeProduk.start(
+                        { facingMode: { exact: "environment" } }, // Paksa Kamera Belakang Utama HP
+                        { 
+                            fps: 15,
+                            videoConstraints: {
+                                facingMode: { exact: "environment" },
+                                width: { ideal: 3840 },
+                                height: { ideal: 2160 }
+                            }
+                        },
+                        (decodedText) => { 
+                            if (isScanLocked) return;
+                            isScanLocked = true;
+                            triggerInputProductScan(decodedText); 
+                            setTimeout(() => { isScanLocked = false; }, 2000); 
+                        },
+                        (errorMessage) => { }
+                    );
+                    btn.innerText = "Matikan Kamera"; btn.style.background = "#ef4444";
+                } catch (err) { placeholder.style.display = "block"; btn.innerText = "Buka Kamera Input"; popNotif("Gunakan perangkat HP untuk akses kamera belakang", "#ef4444"); }
+            } else { matikanKameraProduk(); }
+        });
+
+        async function matikanKameraProduk() {
+            const btn = document.getElementById('btn-toggle-scan-produk'); const placeholder = document.getElementById('scanner-placeholder-produk');
+            if (html5QrCodeProduk && html5QrCodeProduk.isScanning) { await html5QrCodeProduk.stop(); }
+            placeholder.style.display = "block"; btn.innerText = "Buka Kamera Input"; btn.style.background = "#475569";
+        }
+
+        async function triggerInputProductScan(barcode) {
+            document.getElementById('prod-barcode').value = barcode;
+            const snapshot = await get(ref(db, `users/${currentUid}/products/${barcode}`));
+            if(snapshot.exists()) {
+                const prod = snapshot.val();
+                document.getElementById('prod-nama').value = prod.nama;
+                document.getElementById('prod-modal').value = window.formatRupiahString(prod.hargaModal || 0);
+                document.getElementById('prod-jual').value = window.formatRupiahString(prod.hargaJual || 0);
+                document.getElementById('prod-stok').value = prod.stok;
+                popNotif("Data produk ditemukan! Silakan update.", "#0284c7");
+            } else {
+                document.getElementById('prod-nama').value = ''; document.getElementById('prod-modal').value = '';
+                document.getElementById('prod-jual').value = ''; document.getElementById('prod-stok').value = '';
+                popNotif("Barcode Terbaca! Silakan isi Nama & Harga.", "#e59e0b");
+                document.getElementById('prod-nama').focus(); 
+            }
+        }
+
+        function popNotif(teks, warna) {
+            const toast = document.getElementById('toast-alert');
+            toast.innerText = teks; toast.style.backgroundColor = warna; toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+
+    <script>
+        let keranjang = {}; let totalGlobalHarga = 0; let selectedMethod = 'tunai';
+
+        window.tambahKeKeranjang = function(barcode, nama, harga) {
+            if(keranjang[barcode]) { keranjang[barcode].qty += 1; } 
+            else { keranjang[barcode] = { nama: nama, harga: harga, qty: 1 }; }
+            renderKeranjang();
+        }
+
+        window.kosongkanKeranjang = function() { keranjang = {}; renderKeranjang(); }
+        window.getGlobalTotal = function() { return totalGlobalHarga; }
+        window.getGlobalMethod = function() { return selectedMethod; }
+        window.getKeranjangData = function() { return keranjang; }
+
+        function renderKeranjang() {
+            const cartBody = document.getElementById('cart-items');
+            cartBody.innerHTML = ''; totalGlobalHarga = 0;
+            for(let key in keranjang) {
+                let item = keranjang[key];
+                let subtotal = item.harga * item.qty; totalGlobalHarga += subtotal;
+                cartBody.innerHTML += `<tr><td><strong>${item.nama}</strong></td><td>${item.qty}x</td><td>Rp ${window.formatRupiahString(subtotal)}</td></tr>`;
+            }
+            document.getElementById('kasir-total-tagihan').innerText = "Rp " + window.formatRupiahString(totalGlobalHarga);
+            hitungKembalian(); 
+        }
+
+        const cashInput = document.getElementById('cash-input');
+        const prodModal = document.getElementById('prod-modal');
+        const prodJual = document.getElementById('prod-jual');
+
+        [cashInput, prodModal, prodJual].forEach(inputElement => {
+            if(inputElement) {
+                inputElement.addEventListener('input', function(e) {
+                    let valueClean = this.value.replace(/[^\d]/g, "");
+                    if (valueClean) this.value = window.formatRupiahString(valueClean);
+                    else this.value = "";
+                    if(this.id === 'cash-input') { hitungKembalian(); }
+                });
+            }
+        });
+
+        function hitungKembalian() {
+            const bayar = window.cleanRupiahValue(cashInput.value);
+            const sisa = bayar - totalGlobalHarga;
+            if (sisa >= 0 && totalGlobalHarga > 0) {
+                document.getElementById('cash-change').value = "Rp " + window.formatRupiahString(sisa);
+            } else { document.getElementById('cash-change').value = "Rp 0"; }
+        }
+
+        function switchPage(pageId, titleTag) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            document.getElementById('page-title-tag').innerText = titleTag;
+            const activeNav = Array.from(document.querySelectorAll('.nav-item')).find(n => n.getAttribute('onclick').includes(pageId));
+            if (activeNav) activeNav.classList.add('active');
+        }
+
+        function setPaymentMethod(method) {
+            selectedMethod = method;
+            const tunai = document.getElementById('pay-tunai'); const qris = document.getElementById('pay-qris');
+            const tunaiGroup = document.getElementById('input-tunai-group'); const qrisGroup = document.getElementById('display-qris-group');
+            if (method === 'tunai') {
+                tunai.classList.add('active'); qris.classList.remove('active');
+                tunaiGroup.style.display = 'block'; qrisGroup.style.display = 'none';
+            } else {
+                qris.classList.add('active'); tunai.classList.remove('active');
+                tunaiGroup.style.display = 'none'; qrisGroup.style.display = 'block';
+            }
+        }
+
+        history.pushState(null, null, window.location.href);
+        window.addEventListener('popstate', function(event) { history.pushState(null, null, window.location.href); });
+    </script>
+</body>
+</html>
